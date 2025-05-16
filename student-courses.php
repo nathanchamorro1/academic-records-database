@@ -18,31 +18,52 @@ include 'config.php';
 if (!empty($_GET['student'])) {
     $sid = $conn->real_escape_string($_GET['student']);
     $sql = "
-      SELECT c.CourseNumber, c.Title, e.Grade
+      SELECT st.FirstName,
+             st.LastName,
+             c.CourseNumber,
+             c.Title,
+             e.Grade
       FROM Enrollment e
-      JOIN Section  s ON e.SectionID = s.SectionID
-      JOIN Course   c ON s.CourseNumber = c.CourseNumber
+      JOIN Student   st ON e.StudentID   = st.StudentID
+      JOIN Section   s  ON e.SectionID   = s.SectionID
+      JOIN Course    c  ON s.CourseNumber = c.CourseNumber
       WHERE e.StudentID = '$sid'
     ";
     $res = $conn->query($sql);
 
     if ($res->num_rows) {
-        echo "<h2>Transcript for $sid</h2>
-              <table border='1'><tr>
-                <th>Course</th><th>Title</th><th>Grade</th>
+        // Fetch first row to get name and print header
+        $row = $res->fetch_assoc();
+        echo "<h2>Transcript for {$row['FirstName']} {$row['LastName']} (ID $sid)</h2>
+              <table border='1'>
+                <tr>
+                  <th>Course</th>
+                  <th>Title</th>
+                  <th>Grade</th>
+                </tr>";
+
+        // Print first record
+        echo "<tr>
+                <td>{$row['CourseNumber']}</td>
+                <td>{$row['Title']}</td>
+                <td>{$row['Grade']}</td>
               </tr>";
-        while ($r = $res->fetch_assoc()) {
+
+        // Print remaining records
+        while ($row = $res->fetch_assoc()) {
             echo "<tr>
-                    <td>{$r['CourseNumber']}</td>
-                    <td>{$r['Title']}</td>
-                    <td>{$r['Grade']}</td>
+                    <td>{$row['CourseNumber']}</td>
+                    <td>{$row['Title']}</td>
+                    <td>{$row['Grade']}</td>
                   </tr>";
         }
+
         echo "</table>";
     } else {
-        echo "<p>No records found for student $sid.</p>";
+        echo "<p>No records found for student ID $sid.</p>";
     }
 }
 ?>
 </body>
 </html>
+
