@@ -18,23 +18,52 @@ include 'config.php';
 if (!empty($_GET['ssn'])) {
     $ssn = $conn->real_escape_string($_GET['ssn']);
     $sql = "
-      SELECT c.CourseNumber, c.Title, s.Classroom,
-             s.MeetingDays, s.StartTime, s.EndTime
+      SELECT p.FirstName,
+             p.LastName,
+             s.SectionNumber,
+             c.CourseNumber,
+             c.Title,
+             s.Classroom,
+             s.MeetingDays,
+             s.StartTime,
+             s.EndTime
       FROM Section s
-      JOIN Course c ON s.CourseNumber = c.CourseNumber
+      JOIN Course    c ON s.CourseNumber = c.CourseNumber
+      JOIN Professor p ON s.ProfessorSSN = p.SSN
       WHERE s.ProfessorSSN = '$ssn'
     ";
     $res = $conn->query($sql);
 
     if ($res->num_rows) {
-        echo "<h2>Schedule for SSN $ssn</h2>
+        // Fetch the first row to get professor name, then rewind pointer
+        $first = $res->fetch_assoc();
+        echo "<h2>Schedule for Prof. {$first['FirstName']} {$first['LastName']} (SSN $ssn)</h2>
               <table border='1'>
                 <tr>
-                  <th>Course</th><th>Title</th><th>Room</th>
-                  <th>Days</th><th>Start</th><th>End</th>
+                  <th>Section No</th>
+                  <th>Course</th>
+                  <th>Title</th>
+                  <th>Room</th>
+                  <th>Days</th>
+                  <th>Start</th>
+                  <th>End</th>
                 </tr>";
+
+        // Output the first row
+        echo "<tr>
+                <td>{$first['SectionNumber']}</td>
+                <td>{$first['CourseNumber']}</td>
+                <td>{$first['Title']}</td>
+                <td>{$first['Classroom']}</td>
+                <td>{$first['MeetingDays']}</td>
+                <td>{$first['StartTime']}</td>
+                <td>{$first['EndTime']}</td>
+              </tr>";
+
+        // Output the rest
         while ($row = $res->fetch_assoc()) {
             echo "<tr>
+                    <td>{$row['SectionNumber']}</td>
                     <td>{$row['CourseNumber']}</td>
                     <td>{$row['Title']}</td>
                     <td>{$row['Classroom']}</td>
